@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, ChevronUp, Clock3, ExternalLink, Hotel, MapPin, Plane, Route, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock3, ExternalLink, Hotel, MapPin, Navigation, Plane, Route, Sparkles, X } from 'lucide-react'
 
 type Booking = {
   period: string
@@ -111,6 +111,44 @@ function DayCard({ day }: { day: Day }) {
   return <article className={`day-card ${open ? 'is-open' : ''}`}><div className="day-summary" role="button" tabIndex={0} onClick={toggle} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle() } }} aria-expanded={open}><div className="day-date"><span>{day.date}</span><small>{day.weekday}</small></div><div className="day-heading"><span className="day-city">{day.city}</span><h3>{day.title}</h3><a className="stay-link" href="#bookings" onClick={(event) => event.stopPropagation()}><Hotel size={14} /> {day.stay}</a></div><span className="chevron" aria-hidden="true">{open ? <ChevronUp /> : <ChevronDown />}</span></div>{open && <div className="day-detail">{day.transfer && <TransferTimeline transfer={day.transfer} title={day.transferTitle} summary={day.transferSummary} />}{day.scheduleSections && <DayScheduleSections sections={day.scheduleSections} />}{day.schedule && !day.scheduleSections && <DaySchedule schedule={day.schedule} />}{day.route && <div className="route-line"><Route size={15} /> {day.route}</div>}{day.note && <p className="day-note">{day.note}</p>}{day.places && <div className="place-list">{day.places.map((place) => <a key={place.name} href={mapsUrl(place.query)} target="_blank" rel="noreferrer"><MapPin size={15} /><span><b>{place.name}</b>{place.detail && <small>{place.detail}</small>}</span><ExternalLink size={14} /></a>)}</div>}{!day.route && !day.note && !day.transfer && !day.schedule && <p className="day-note muted">详细安排待补充</p>}</div>}</article>
 }
 
+const navSections = [
+  { id: 'top', label: '首页', icon: Sparkles },
+  { id: 'route', label: '路线总览', icon: Route },
+  { id: 'bookings', label: '酒店', icon: Hotel },
+  { id: 'itinerary', label: '逐日行程', icon: Clock3 },
+]
+
+function FloatingNav() {
+  const [open, setOpen] = useState(false)
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setOpen(false)
+  }
+  const scrollToDay = (index: number) => {
+    const articles = document.querySelectorAll('#itinerary .day-card')
+    const el = articles[index] as HTMLElement | null
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setOpen(false)
+  }
+  return <div className="floating-nav">
+    {open && <div className="floating-nav-panel">
+      <div className="floating-nav-header">
+        <span>导航</span>
+        <button onClick={() => setOpen(false)} aria-label="关闭"><X size={16} /></button>
+      </div>
+      <div className="floating-nav-sections">
+        {navSections.map((s) => <button key={s.id} onClick={() => scrollTo(s.id)}><s.icon size={15} /><span>{s.label}</span></button>)}
+      </div>
+      <div className="floating-nav-divider" />
+      <div className="floating-nav-days">
+        {days.map((day, i) => <button key={day.date} onClick={() => scrollToDay(i)}><span className="fn-day">{day.date}</span><span className="fn-label">{day.city}</span><span className="fn-title">{day.title}</span></button>)}
+      </div>
+    </div>}
+    <button className="floating-nav-btn" onClick={() => setOpen((v) => !v)} aria-label="导航"><Navigation size={20} /></button>
+  </div>
+}
+
 export default function HomePage() {
-  return <div className="travel-app"><header className="topbar"><a className="brand" href="#top"><span className="brand-mark"><Sparkles size={16} /></span><span>关西行 <em>2026</em></span></a><nav><a href="#route">路线总览</a><a href="#bookings">酒店</a><a href="#itinerary">逐日行程</a></nav><span className="mode-note">自动跟随昼夜</span></header><main id="top"><section className="hero"><div className="hero-copy"><p className="eyebrow">Kansai Travel Notes · 10.01 — 10.11</p><h1>玮玮、困困和亮亮的<br /><i>关西行。</i></h1><p className="hero-intro">大阪、神户、奈良、宇治与京都。先把已经确定的行程收好，剩下的路，慢慢补全。</p><Countdown /></div><div className="hero-stamp"><span>11</span><small>DAYS<br />IN KANSAI</small></div></section><section className="section route-section" id="route"><div className="section-head"><div><p className="eyebrow">01 / The route</p><h2>行程总览</h2></div><p>大阪 → 神户 → 大阪<br />→ 奈良／宇治 → 京都 → 大阪</p></div><RouteMap /></section><section className="section bookings" id="bookings"><div className="section-head"><div><p className="eyebrow">02 / Hotels</p><h2>酒店</h2></div></div><div className="booking-grid"><div className="booking-card flight-card"><div className="booking-icon"><Plane size={20} /></div><div><span className="card-kicker">FLIGHT</span><h3>抵达大阪</h3><p>10.01 · 19:20 · T1</p></div></div>{bookings.map((booking) => <BookingCard key={`${booking.period}-${booking.name}`} booking={booking} />)}</div></section><section className="section itinerary" id="itinerary"><div className="section-head"><div><p className="eyebrow">03 / Day by day</p><h2>逐日行程</h2></div><p>点击日期展开路线<br />地点可直接打开 Google Maps</p></div><div className="days-list">{days.map((day) => <DayCard key={day.date} day={day} />)}</div></section></main><footer><span>关西行 · 2026</span><span>行程持续更新中</span></footer></div>
+  return <div className="travel-app"><header className="topbar"><a className="brand" href="#top"><span className="brand-mark"><Sparkles size={16} /></span><span>关西行 <em>2026</em></span></a><nav><a href="#route">路线总览</a><a href="#bookings">酒店</a><a href="#itinerary">逐日行程</a></nav><span className="mode-note">自动跟随昼夜</span></header><main id="top"><section className="hero"><div className="hero-copy"><p className="eyebrow">Kansai Travel Notes · 10.01 — 10.11</p><h1>玮玮、困困和亮亮的<br /><i>关西行。</i></h1><p className="hero-intro">大阪、神户、奈良、宇治与京都。先把已经确定的行程收好，剩下的路，慢慢补全。</p><Countdown /></div><div className="hero-stamp"><span>11</span><small>DAYS<br />IN KANSAI</small></div></section><section className="section route-section" id="route"><div className="section-head"><div><p className="eyebrow">01 / The route</p><h2>行程总览</h2></div><p>大阪 → 神户 → 大阪<br />→ 奈良／宇治 → 京都 → 大阪</p></div><RouteMap /></section><section className="section bookings" id="bookings"><div className="section-head"><div><p className="eyebrow">02 / Hotels</p><h2>酒店</h2></div></div><div className="booking-grid"><div className="booking-card flight-card"><div className="booking-icon"><Plane size={20} /></div><div><span className="card-kicker">FLIGHT</span><h3>抵达大阪</h3><p>10.01 · 19:20 · T1</p></div></div>{bookings.map((booking) => <BookingCard key={`${booking.period}-${booking.name}`} booking={booking} />)}</div></section><section className="section itinerary" id="itinerary"><div className="section-head"><div><p className="eyebrow">03 / Day by day</p><h2>逐日行程</h2></div><p>点击日期展开路线<br />地点可直接打开 Google Maps</p></div><div className="days-list">{days.map((day) => <DayCard key={day.date} day={day} />)}</div></section></main><footer><span>关西行 · 2026</span><span>行程持续更新中</span></footer><FloatingNav /></div>
 }
